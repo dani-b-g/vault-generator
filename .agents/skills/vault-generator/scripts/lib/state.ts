@@ -8,7 +8,7 @@ import { hasPrivateAbsolutePath, isInside, safeJoin } from './safety.ts';
 import { VG_DIR } from './vault.ts';
 import { nowIso, sha256, shortHash, slugify, stableStringify, toPosix, VgError } from './util.ts';
 
-export const TOOL_VERSION = '0.1.0';
+export const TOOL_VERSION = '1.0.0';
 
 export interface NoteState {
   key: string;

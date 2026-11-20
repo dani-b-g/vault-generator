@@ -16,7 +16,7 @@ Cada nota cita sus fuentes, lleva un identificador estable y enlaza con las nota
 sincronizado a medida que cambia el código, y los agentes (y las personas) pueden hacerle preguntas concretas en lugar
 de leer todo el repositorio.
 
-> **Estado:** versión inicial (`0.1.0`). El motor y sus 51 pruebas automáticas se ejecutan en local con Node.js.
+> **Estado:** versión inicial (`1.0.0`). El motor y sus 51 pruebas automáticas se ejecutan en local con Node.js.
 > Consulta las [limitaciones](#limitaciones) antes de usarlo en bases de código grandes o poco habituales.
 
 ---

@@ -16,7 +16,7 @@ packages, documentation and configuration in front of it, then builds an
 notes. The vault stays in sync as the code changes. Agents (and people) can then ask it focused questions instead of
 reading the whole repository.
 
-> **Status:** early release (`0.1.0`). The engine and its 51 automated tests run locally on Node.js. See
+> **Status:** early release (`1.0.0`). The engine and its 51 automated tests run locally on Node.js. See
 > [Limitations](#limitations) before relying on it for large or unusual codebases.
 
 ---

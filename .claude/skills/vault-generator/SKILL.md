@@ -4,7 +4,7 @@ description: Builds and maintains an indexed, navigable Obsidian knowledge vault
 license: Apache-2.0. LICENSE.txt has complete terms; NOTICE.txt lists bundled third-party licences
 compatibility: Requires Node.js 22.18+ (built-in TypeScript type stripping and node:sqlite). Local only, no network or external services. Designed for Claude Code and Codex; works with any agent that can run shell commands.
 metadata:
-  version: "0.1.0"
+  version: "1.0.0"
 ---
 
 # vault-generator
