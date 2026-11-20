@@ -17,7 +17,9 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "validate-skill": "node skills/vault-generator/scripts/vg.mjs --mode validate-skill --skill-dir skills/vault-generator",
     "vendor": "node tools/build-vendor.mjs",
-    "install:project": "node skills/vault-generator/scripts/install.ts --target . --agent both"
+    "install:project": "node skills/vault-generator/scripts/install.ts --target . --agent both",
+    "version:check": "node tools/version.mjs check",
+    "version:set": "node tools/version.mjs set"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",

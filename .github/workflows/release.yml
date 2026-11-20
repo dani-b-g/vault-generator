@@ -1,0 +1,104 @@
+# Publishes a GitHub release when a version tag is pushed.
+#
+#   npm run version:set -- 0.2.0          bump every file that carries the version, refresh the installed copies
+#   git commit -am "chore: release v0.2.0"
+#   git tag -a v0.2.0 -m "v0.2.0"
+#   git push origin master v0.2.0
+#
+# The workflow re-runs CI, checks that the tag matches the version in the files and that the tagged
+# commit is on master, then attaches the skill as a zip with its checksum. A tag with a hyphen
+# (v0.2.0-rc.1) is published as a pre-release.
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # create the release and upload its assets
+    env:
+      TAG: ${{ github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0 # needed to know whether the tagged commit is on master
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: '24'
+
+      - name: Tag matches the version in the files
+        run: node tools/version.mjs check --tag "$TAG"
+
+      - name: Tagged commit is on master
+        run: |
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/master; then
+            echo "::error::the tagged commit is not on master; merge it first, then tag"
+            exit 1
+          fi
+
+      - name: Build release assets
+        run: |
+          mkdir dist
+          # the skill folder only, with a top-level vault-generator/ so it unzips straight into .claude/skills
+          git archive --format=zip --prefix=vault-generator/ \
+            -o "dist/vault-generator-skill-$TAG.zip" "$GITHUB_SHA:skills/vault-generator"
+          (cd dist && sha256sum -- *.zip > SHA256SUMS)
+          # smoke test the artifact itself: unpacked on its own, it must validate and run
+          tmp="$(mktemp -d)"
+          unzip -q "dist/vault-generator-skill-$TAG.zip" -d "$tmp"
+          node "$tmp/vault-generator/scripts/vg.mjs" --mode validate-skill --skill-dir "$tmp/vault-generator"
+
+      - name: Write release notes
+        run: |
+          cat > notes.md <<'EOF'
+          ## Install
+
+          **Claude Code plugin** (installs the latest commit of the default branch, not this tag):
+
+          ```sh
+          claude plugin install vault-generator --marketplace dani-b-g/vault-generator
+          ```
+
+          **Pinned to this release** (Claude Code and Codex): download `vault-generator-skill-__TAG__.zip`
+          and unzip it into your project, for Claude Code and/or Codex:
+
+          ```sh
+          unzip vault-generator-skill-__TAG__.zip -d .claude/skills
+          unzip vault-generator-skill-__TAG__.zip -d .agents/skills
+          ```
+
+          Requires Node.js 22.18 or newer. Verify the download with `SHA256SUMS`.
+
+          ## What's changed
+
+          EOF
+          sed -i "s/__TAG__/$TAG/g" notes.md
+          gh api "repos/$GITHUB_REPOSITORY/releases/generate-notes" -f tag_name="$TAG" --jq .body >> notes.md
+
+      - name: Create the release
+        run: |
+          flags=()
+          case "$TAG" in *-*) flags+=(--prerelease) ;; esac
+          gh release create "$TAG" dist/* \
+            --title "$TAG" \
+            --notes-file notes.md \
+            --verify-tag \
+            "${flags[@]}"
