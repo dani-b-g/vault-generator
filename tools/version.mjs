@@ -3,6 +3,10 @@
 //   node tools/version.mjs check [--tag vX.Y.Z]   every file agrees, the installed copies are current,
 //                                                 and (with --tag) the version matches the tag
 //   node tools/version.mjs set X.Y.Z              rewrite every file, then refresh the installed copies
+//   node tools/version.mjs next patch|minor|major [--beta]
+//                                                 print the next version (same rules as `npm version`):
+//                                                 0.1.0 -> patch 0.1.1, minor 0.2.0, major 1.0.0;
+//                                                 with --beta, 0.2.0-beta.1, then 0.2.0-beta.2 …
 //
 // Zero dependencies: it only needs Node, so CI can run it before `npm ci`.
 import fs from 'node:fs';
@@ -87,12 +91,38 @@ function set(raw) {
   check();
 }
 
+function next(bump, beta) {
+  if (!['patch', 'minor', 'major'].includes(bump)) fail(`usage: node tools/version.mjs next patch|minor|major [--beta]   (got "${bump ?? ''}")`);
+  const versions = [...new Set(current().map((f) => f.version))];
+  if (versions.length !== 1) fail(`files disagree on the version: ${versions.join(', ')}`);
+  const m = /^(\d+)\.(\d+)\.(\d+)(?:-(.+))?$/.exec(versions[0]);
+  if (!m) fail(`"${versions[0]}" is not a valid version`);
+  let [major, minor, patch] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const pre = m[4];
+  // Same rules as `npm version`: bumping a pre-release finishes it when it was already at that level.
+  if (bump === 'major') {
+    if (minor !== 0 || patch !== 0 || !pre) major++;
+    minor = 0;
+    patch = 0;
+  } else if (bump === 'minor') {
+    if (patch !== 0 || !pre) minor++;
+    patch = 0;
+  } else if (!pre) patch++;
+  const base = `${major}.${minor}.${patch}`;
+  if (!beta) return console.log(base);
+  const prev = /^beta\.(\d+)$/.exec(pre ?? '');
+  const sameBase = base === `${m[1]}.${m[2]}.${m[3]}`;
+  console.log(`${base}-beta.${prev && sameBase ? Number(prev[1]) + 1 : 1}`);
+}
+
 const [cmd, ...rest] = process.argv.slice(2);
 if (cmd === 'check') {
   const i = rest.indexOf('--tag');
   check(i === -1 ? undefined : rest[i + 1]);
 } else if (cmd === 'set') {
   set(rest[0]);
+} else if (cmd === 'next') {
+  next(rest[0], rest.includes('--beta'));
 } else {
-  fail('usage: node tools/version.mjs check [--tag vX.Y.Z] | set X.Y.Z');
+  fail('usage: node tools/version.mjs check [--tag vX.Y.Z] | set X.Y.Z | next patch|minor|major [--beta]');
 }

@@ -1,12 +1,11 @@
-# Runs on pushes to master and on pull requests. The release workflow calls it too,
-# so a release is never published from a commit that does not pass.
+# Runs on pushes to master and on pull requests. The release workflow refuses to run
+# unless this passed on the head of master.
 name: CI
 
 on:
   push:
     branches: [master]
   pull_request:
-  workflow_call:
 
 permissions:
   contents: read

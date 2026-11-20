@@ -862,20 +862,25 @@ tipos, la batería de pruebas y `validate-skill` en Ubuntu y Windows con Node.js
 `claude plugin validate . --strict` y comprueba que la versión es la misma en todos los archivos y que las copias
 instaladas coinciden con la skill.
 
-Para publicar una versión:
+Para publicar una versión, abre la pestaña **Actions** de GitHub, elige **Release** en la lista de la izquierda y pulsa
+**Run workflow**. Después elige:
 
-```sh
-npm run version:set -- 0.2.0    # reescribe todos los archivos que llevan la versión y actualiza las copias instaladas
-git commit -am "chore: release v0.2.0"
-git tag -a v0.2.0 -m "v0.2.0"
-git push origin master v0.2.0
-```
+- **Use workflow from**: la rama desde la que publicar. Viene seleccionada la rama por defecto.
+- **bump**: `patch`, `minor` o `major`.
+- **beta**: márcala para publicar una beta (una pre-release) en lugar de una versión estable.
 
-Al subir el tag arranca `.github/workflows/release.yml`. Vuelve a ejecutar el CI, comprueba que el tag coincide con la
-versión de los archivos y que el commit etiquetado está en `master`, y después crea una release de GitHub con notas
-generadas y dos archivos adjuntos: `vault-generator-skill-vX.Y.Z.zip` (la carpeta de la skill, lista para descomprimir en
-`.claude/skills` o `.agents/skills`) y `SHA256SUMS`. Un tag con guion, como `v0.2.0-rc.1`, se publica como
-pre-release.
+Partiendo de la versión `0.1.0`: `patch` da `0.1.1`, `minor` da `0.2.0` y `major` da `1.0.0`. Con **beta** marcada,
+`minor` da `0.2.0-beta.1`, y si lo ejecutas otra vez da `0.2.0-beta.2`. Ejecutar `minor` sin **beta** a continuación
+publica `0.2.0`.
+
+El workflow reescribe todos los archivos que llevan la versión (`npm run version:set`), ejecuta la comprobación de tipos,
+las pruebas y `validate-skill` sobre el resultado, y solo entonces hace commit del cambio y del tag `vX.Y.Z` en la rama
+elegida con un único push atómico. Después crea una release de GitHub con notas generadas y dos archivos adjuntos:
+`vault-generator-skill-vX.Y.Z.zip` (la carpeta de la skill, lista para descomprimir en `.claude/skills` o
+`.agents/skills`) y `SHA256SUMS`. Si falla alguna comprobación, no se sube nada.
+
+El workflow hay que lanzarlo desde la pestaña Actions: la página Releases solo lista las versiones. Sube a la rama
+elegida, así que falla si esa rama exige pull requests.
 
 El marketplace del plugin no tiene campo `version`, así que `claude plugin install` instala siempre el último commit de
 la rama por defecto. Para fijar una versión hay que usar el zip.

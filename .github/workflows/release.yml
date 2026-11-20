@@ -1,72 +1,121 @@
-# Publishes a GitHub release when a version tag is pushed.
+# Release from the Actions tab: Actions -> Release -> Run workflow.
+#   "Use workflow from"  the branch to release from (the default branch is preselected)
+#   bump                 patch, minor or major
+#   beta                 tick it to publish a beta (a pre-release) instead of a stable release
 #
-#   npm run version:set -- 0.2.0          bump every file that carries the version, refresh the installed copies
-#   git commit -am "chore: release v0.2.0"
-#   git tag -a v0.2.0 -m "v0.2.0"
-#   git push origin master v0.2.0
-#
-# The workflow re-runs CI, checks that the tag matches the version in the files and that the tagged
-# commit is on master, then attaches the skill as a zip with its checksum. A tag with a hyphen
-# (v0.2.0-rc.1) is published as a pre-release.
+# It works out the next version, rewrites every file that carries it, runs the checks on the result, and only
+# then commits, tags and pushes (one atomic push to the chosen branch) and creates the GitHub release with
+# the skill zip and its checksum. If a check fails, nothing is pushed.
 name: Release
 
 on:
-  push:
-    tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+*'
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Release type'
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+      beta:
+        description: 'Beta (pre-release), e.g. 0.2.0-beta.1'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release
   cancel-in-progress: false
 
 jobs:
-  ci:
-    uses: ./.github/workflows/ci.yml
-
   release:
-    needs: ci
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     permissions:
-      contents: write # create the release and upload its assets
+      contents: write # push the bump commit and the tag, create the release
     env:
-      TAG: ${{ github.ref_name }}
+      BUMP: ${{ inputs.bump }}
+      BETA: ${{ inputs.beta }}
+      BRANCH: ${{ github.ref_name }}
       GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
-          fetch-depth: 0 # needed to know whether the tagged commit is on master
-          persist-credentials: false
+          persist-credentials: false # npm ci runs third-party code: the token is only given to the push step
+
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: '24'
 
-      - name: Tag matches the version in the files
-        run: node tools/version.mjs check --tag "$TAG"
-
-      - name: Tagged commit is on master
+      - name: Work out the version
         run: |
-          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/master; then
-            echo "::error::the tagged commit is not on master; merge it first, then tag"
+          if [ "$GITHUB_REF_TYPE" != "branch" ]; then
+            echo "::error::choose a branch in \"Use workflow from\", not a tag ($GITHUB_REF_NAME)"
             exit 1
           fi
+          args=("$BUMP")
+          if [ "$BETA" = "true" ]; then args+=(--beta); fi
+          VERSION="$(node tools/version.mjs next "${args[@]}")"
+          TAG="v$VERSION"
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "::error::tag $TAG already exists"
+            exit 1
+          fi
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::error::a release $TAG already exists"
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          echo "Releasing $TAG from $BRANCH"
 
-      - name: Build release assets
+      - name: Bump the version everywhere and refresh the installed copies
+        run: npm run version:set -- "$VERSION"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck, tests and skill validation on the bumped tree
+        run: |
+          npm run typecheck
+          npm test
+          npm run validate-skill
+          node tools/version.mjs check --tag "$TAG"
+
+      - name: Commit the bump and create the tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # only files already tracked: the bump rewrites existing files and never adds one
+          git add -u
+          if [ -n "$(git ls-files --others --exclude-standard)" ]; then
+            echo "::error::unexpected untracked files after the bump; refusing to release:"
+            git ls-files --others --exclude-standard
+            exit 1
+          fi
+          git commit -m "chore: release $TAG"
+          git tag -a "$TAG" -m "$TAG"
+
+      - name: Build the skill zip and checksums
         run: |
           mkdir dist
-          # the skill folder only, with a top-level vault-generator/ so it unzips straight into .claude/skills
+          # the skill folder only, under a top-level vault-generator/ so it unzips straight into .claude/skills
           git archive --format=zip --prefix=vault-generator/ \
-            -o "dist/vault-generator-skill-$TAG.zip" "$GITHUB_SHA:skills/vault-generator"
+            -o "dist/vault-generator-skill-$TAG.zip" "HEAD:skills/vault-generator"
           (cd dist && sha256sum -- *.zip > SHA256SUMS)
-          # smoke test the artifact itself: unpacked on its own, it must validate and run
+          # smoke test the artifact on its own: unpacked, it must validate
           tmp="$(mktemp -d)"
           unzip -q "dist/vault-generator-skill-$TAG.zip" -d "$tmp"
           node "$tmp/vault-generator/scripts/vg.mjs" --mode validate-skill --skill-dir "$tmp/vault-generator"
 
-      - name: Write release notes
+      - name: Push the commit and the tag
+        run: |
+          git push --atomic "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            "HEAD:refs/heads/$BRANCH" "refs/tags/$TAG:refs/tags/$TAG"
+
+      - name: Write the release notes
         run: |
           cat > notes.md <<'EOF'
           ## Install
@@ -96,9 +145,10 @@ jobs:
       - name: Create the release
         run: |
           flags=()
-          case "$TAG" in *-*) flags+=(--prerelease) ;; esac
+          if [ "$BETA" = "true" ]; then flags+=(--prerelease); fi
           gh release create "$TAG" dist/* \
             --title "$TAG" \
             --notes-file notes.md \
             --verify-tag \
             "${flags[@]}"
+          echo "Released \`$TAG\` from \`$BRANCH\` (commit \`$(git rev-parse --short HEAD)\`)." >> "$GITHUB_STEP_SUMMARY"

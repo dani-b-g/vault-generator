@@ -853,19 +853,25 @@ test suite and `validate-skill` on Ubuntu and Windows with Node.js 22.18 and 24.
 `claude plugin validate . --strict`, and checks that the version is the same in every file and that the installed copies
 match the skill.
 
-To publish a release:
+To publish a release, open the **Actions** tab on GitHub, choose **Release** in the list on the left and click
+**Run workflow**. Then choose:
 
-```sh
-npm run version:set -- 0.2.0    # rewrites every file that carries the version and refreshes the installed copies
-git commit -am "chore: release v0.2.0"
-git tag -a v0.2.0 -m "v0.2.0"
-git push origin master v0.2.0
-```
+- **Use workflow from**: the branch to release from. The default branch is preselected.
+- **bump**: `patch`, `minor` or `major`.
+- **beta**: tick it to publish a beta (a pre-release) instead of a stable release.
 
-Pushing the tag starts `.github/workflows/release.yml`. It re-runs CI, checks that the tag matches the version in the
-files and that the tagged commit is on `master`, and then creates a GitHub release with generated notes and two assets:
-`vault-generator-skill-vX.Y.Z.zip` (the skill folder, ready to unzip into `.claude/skills` or `.agents/skills`) and
-`SHA256SUMS`. A tag with a hyphen, such as `v0.2.0-rc.1`, is published as a pre-release.
+From version `0.1.0`: `patch` gives `0.1.1`, `minor` gives `0.2.0` and `major` gives `1.0.0`. With **beta** ticked,
+`minor` gives `0.2.0-beta.1`, and running it again gives `0.2.0-beta.2`. Running `minor` without **beta** after that
+publishes `0.2.0`.
+
+The workflow rewrites every file that carries the version (`npm run version:set`), runs the type check, the tests and
+`validate-skill` on the result, and only then commits the change and the tag `vX.Y.Z` to the chosen branch in one atomic
+push. It then creates a GitHub release with generated notes and two assets: `vault-generator-skill-vX.Y.Z.zip` (the
+skill folder, ready to unzip into `.claude/skills` or `.agents/skills`) and `SHA256SUMS`. If a check fails, nothing is
+pushed.
+
+The workflow has to be started from the Actions tab: the Releases page only lists releases. It pushes to the chosen
+branch, so it fails if that branch requires pull requests.
 
 The plugin marketplace has no `version` field, so `claude plugin install` always installs the latest commit of the
 default branch. The zip is how to pin a release.
