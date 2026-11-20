@@ -1,0 +1,15 @@
+vault-generator
+Copyright 2026 vault-generator contributors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This product bundles third-party software in skills/vault-generator/scripts/vendor/,
+distributed under its own licence terms:
+
+  yaml 2.9.1 (https://github.com/eemeli/yaml)
+  Copyright Eemeli Aro
+  ISC License — see skills/vault-generator/scripts/vendor/LICENSE-yaml.txt
+
+  smol-toml 1.9.1 (https://github.com/squirrelchat/smol-toml)
+  Copyright (c) Squirrel Chat et al.
+  BSD-3-Clause License — see skills/vault-generator/scripts/vendor/LICENSE-smol-toml.txt

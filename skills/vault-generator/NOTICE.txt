@@ -1,0 +1,14 @@
+vault-generator (Agent Skill)
+Copyright 2026 vault-generator contributors
+
+Licensed under the Apache License, Version 2.0 (see LICENSE.txt in this directory).
+
+This skill bundles third-party software in scripts/vendor/, distributed under its own licence terms:
+
+  yaml 2.9.1 (https://github.com/eemeli/yaml)
+  Copyright Eemeli Aro
+  ISC License - see scripts/vendor/LICENSE-yaml.txt
+
+  smol-toml 1.9.1 (https://github.com/squirrelchat/smol-toml)
+  Copyright (c) Squirrel Chat et al.
+  BSD-3-Clause License - see scripts/vendor/LICENSE-smol-toml.txt

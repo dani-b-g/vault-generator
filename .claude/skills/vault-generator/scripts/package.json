@@ -1,0 +1,7 @@
+{
+  "name": "vault-generator-scripts",
+  "private": true,
+  "type": "module",
+  "description": "Runtime scripts of the vault-generator Agent Skill. Requires Node >= 22.18 (native TypeScript type-stripping + node:sqlite).",
+  "engines": { "node": ">=22.18.0" }
+}

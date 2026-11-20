@@ -1,0 +1,29 @@
+{
+  "name": "vault-generator-dev",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Development repository for the vault-generator Agent Skill",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dani-b-g/vault-generator.git"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "scripts": {
+    "test": "node --test --test-reporter=spec \"tests/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "validate-skill": "node skills/vault-generator/scripts/vg.mjs --mode validate-skill --skill-dir skills/vault-generator",
+    "vendor": "node tools/build-vendor.mjs",
+    "install:project": "node skills/vault-generator/scripts/install.ts --target . --agent both"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "esbuild": "^0.28.2",
+    "smol-toml": "^1.9.1",
+    "typescript": "^7.0.2",
+    "yaml": "^2.9.1"
+  }
+}

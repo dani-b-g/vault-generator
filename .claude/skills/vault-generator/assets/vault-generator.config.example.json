@@ -1,0 +1,22 @@
+{
+  "sources": ["."],
+  "vault": "knowledge-vault",
+  "scope": [],
+  "language": "en",
+  "depth": "standard",
+  "exclude": ["**/fixtures/**", "**/*.generated.*", "legacy/**"],
+  "include": [],
+  "ignoreDirs": ["tmp", "vendor"],
+  "useGitignore": true,
+  "access": {
+    "deny": ["secrets/**", "**/*.key"],
+    "restricted": ["docs/internal/**"],
+    "followSymlinks": "within-roots",
+    "maxFileBytes": 2097152
+  },
+  "layout": { "folderThreshold": 6, "maxNoteChars": 24000 },
+  "retention": { "backupRuns": 10 },
+  "attachments": { "copy": true, "maxBytes": 5242880 },
+  "plugins": [],
+  "truthPrecedence": ["manifest", "code", "generated-doc", "doc", "readme"]
+}

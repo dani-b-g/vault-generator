@@ -1,0 +1,23 @@
+{
+  "name": "vault-generator",
+  "description": "Agent Skill that turns a codebase or documentation set into an indexed Obsidian knowledge vault and retrieves only what a task needs.",
+  "owner": {
+    "name": "vault-generator contributors",
+    "url": "https://github.com/dani-b-g/vault-generator"
+  },
+  "plugins": [
+    {
+      "name": "vault-generator",
+      "source": "./skills/vault-generator",
+      "description": "Builds and maintains an indexed, navigable Obsidian knowledge vault from any codebase or documentation, and retrieves only the knowledge relevant to a question or task. Runs locally on Node.js 22.18+, with no network access.",
+      "author": {
+        "name": "vault-generator contributors"
+      },
+      "homepage": "https://github.com/dani-b-g/vault-generator",
+      "repository": "https://github.com/dani-b-g/vault-generator",
+      "license": "Apache-2.0",
+      "keywords": ["obsidian", "knowledge-base", "documentation", "codebase", "retrieval"],
+      "category": "documentation"
+    }
+  ]
+}

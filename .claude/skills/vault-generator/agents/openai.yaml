@@ -1,0 +1,6 @@
+interface:
+  display_name: "Vault Generator"
+  short_description: "Build, sync and query an Obsidian knowledge vault from code and docs"
+  default_prompt: "Analyze this workspace and propose a knowledge vault"
+policy:
+  allow_implicit_invocation: true

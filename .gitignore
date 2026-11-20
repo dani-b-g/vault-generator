@@ -1,0 +1,10 @@
+node_modules/
+# vaults generated while trying the skill locally
+knowledge-vault/
+*.tmp.ts
+
+# backups made by the skill installer when --force replaces a modified copy
+.vault-generator-install-backups/
+
+# internal working notes (not published)
+writing-block.md
