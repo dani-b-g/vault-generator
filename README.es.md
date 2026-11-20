@@ -834,7 +834,9 @@ skills/vault-generator/        la skill (es lo que se instala)
     └── lib/                   el motor (detección, analizadores, modelo, planificador, reconciliación, índice, …)
 tests/                         pruebas unitarias y escenarios (fixtures temporales aislados)
 tools/build-vendor.mjs         regenera los parsers incluidos
+tools/version.mjs              mantiene la versión sincronizada entre archivos y la comprueba
 .claude-plugin/marketplace.json  marketplace de plugins de Claude Code (apunta a skills/vault-generator)
+.github/workflows/             CI (ci.yml) y publicación de versiones (release.yml)
 ```
 
 `.claude/skills/vault-generator/` y `.agents/skills/vault-generator/` son copias instaladas para poder probar la skill
@@ -845,12 +847,38 @@ npm install              # solo herramientas de desarrollo (TypeScript, esbuild,
 npm test                 # 51 pruebas: unitarias y 28 escenarios de extremo a extremo
 npm run typecheck
 npm run validate-skill   # comprueba SKILL.md con la especificación de Agent Skills
-claude plugin validate . # comprueba el marketplace del plugin (requiere Claude Code)
+claude plugin validate . --strict  # comprueba el marketplace del plugin (requiere Claude Code)
+npm run version:check    # la versión es la misma en todos los archivos y las copias instaladas coinciden con la skill
 npm run vendor           # regenera los parsers incluidos tras actualizarlos
 ```
 
 El motor es TypeScript que Node ejecuta directamente (*type stripping*). No hay paso de compilación ni `node_modules`
 en tiempo de ejecución.
+
+### Publicar versiones
+
+El CI (`.github/workflows/ci.yml`) se ejecuta en cada push a `master` y en cada pull request. Ejecuta la comprobación de
+tipos, la batería de pruebas y `validate-skill` en Ubuntu y Windows con Node.js 22.18 y 24. También ejecuta
+`claude plugin validate . --strict` y comprueba que la versión es la misma en todos los archivos y que las copias
+instaladas coinciden con la skill.
+
+Para publicar una versión:
+
+```sh
+npm run version:set -- 0.2.0    # reescribe todos los archivos que llevan la versión y actualiza las copias instaladas
+git commit -am "chore: release v0.2.0"
+git tag -a v0.2.0 -m "v0.2.0"
+git push origin master v0.2.0
+```
+
+Al subir el tag arranca `.github/workflows/release.yml`. Vuelve a ejecutar el CI, comprueba que el tag coincide con la
+versión de los archivos y que el commit etiquetado está en `master`, y después crea una release de GitHub con notas
+generadas y dos archivos adjuntos: `vault-generator-skill-vX.Y.Z.zip` (la carpeta de la skill, lista para descomprimir en
+`.claude/skills` o `.agents/skills`) y `SHA256SUMS`. Un tag con guion, como `v0.2.0-rc.1`, se publica como
+pre-release.
+
+El marketplace del plugin no tiene campo `version`, así que `claude plugin install` instala siempre el último commit de
+la rama por defecto. Para fijar una versión hay que usar el zip.
 
 ## Contribuir
 

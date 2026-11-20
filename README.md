@@ -825,7 +825,9 @@ skills/vault-generator/        the skill (this is what gets installed)
     └── lib/                   the engine (detection, analyzers, model, planner, reconciliation, index, …)
 tests/                         unit tests and the scenario suite (isolated temporary fixtures)
 tools/build-vendor.mjs         rebuilds the bundled parsers
+tools/version.mjs              keeps the version in sync across files and checks it
 .claude-plugin/marketplace.json  Claude Code plugin marketplace (points at skills/vault-generator)
+.github/workflows/             CI (ci.yml) and release (release.yml)
 ```
 
 `.claude/skills/vault-generator/` and `.agents/skills/vault-generator/` are installed copies, so the skill can be tried
@@ -836,12 +838,37 @@ npm install              # development tools only (TypeScript, esbuild, parser s
 npm test                 # 51 tests: unit tests plus 28 end-to-end scenarios
 npm run typecheck
 npm run validate-skill   # checks SKILL.md against the Agent Skills specification
-claude plugin validate . # checks the plugin marketplace (needs Claude Code)
+claude plugin validate . --strict  # checks the plugin marketplace (needs Claude Code)
+npm run version:check    # the version is the same everywhere and the installed copies match the skill
 npm run vendor           # rebuild the bundled parsers after upgrading them
 ```
 
 The engine is TypeScript that Node runs directly (type stripping). There is no build step and no runtime
 `node_modules`.
+
+### Releases
+
+CI (`.github/workflows/ci.yml`) runs on every push to `master` and on every pull request. It runs the type check, the
+test suite and `validate-skill` on Ubuntu and Windows with Node.js 22.18 and 24. It also runs
+`claude plugin validate . --strict`, and checks that the version is the same in every file and that the installed copies
+match the skill.
+
+To publish a release:
+
+```sh
+npm run version:set -- 0.2.0    # rewrites every file that carries the version and refreshes the installed copies
+git commit -am "chore: release v0.2.0"
+git tag -a v0.2.0 -m "v0.2.0"
+git push origin master v0.2.0
+```
+
+Pushing the tag starts `.github/workflows/release.yml`. It re-runs CI, checks that the tag matches the version in the
+files and that the tagged commit is on `master`, and then creates a GitHub release with generated notes and two assets:
+`vault-generator-skill-vX.Y.Z.zip` (the skill folder, ready to unzip into `.claude/skills` or `.agents/skills`) and
+`SHA256SUMS`. A tag with a hyphen, such as `v0.2.0-rc.1`, is published as a pre-release.
+
+The plugin marketplace has no `version` field, so `claude plugin install` always installs the latest commit of the
+default branch. The zip is how to pin a release.
 
 ## Contributing
 
