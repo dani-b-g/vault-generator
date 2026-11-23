@@ -34,6 +34,9 @@ concurrency:
 
 jobs:
   release:
+    # only the repository owner can run a release, and it waits for approval in the "release" environment
+    if: github.actor == github.repository_owner
+    environment: release
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
