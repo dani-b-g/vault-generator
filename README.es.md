@@ -905,6 +905,11 @@ Las contribuciones se aceptan bajo la Apache License 2.0 (sección 5 de la licen
 
 Distribuido bajo la [Apache License, Version 2.0](LICENSE). Las atribuciones están en [NOTICE](NOTICE).
 
+**Creador original del proyecto:** Daniel B. Grados ([dani-b-g](https://github.com/dani-b-g))  
+**Repositorio original:** https://github.com/dani-b-g/vault-generator
+
+Se permite el uso comercial y no comercial, la modificación y la redistribución conforme a Apache 2.0. Al redistribuir este proyecto o una obra derivada (incluidas partes de su código), deben conservarse los avisos aplicables de licencia, copyright y atribución según la sección 4 de Apache 2.0. No se exige mostrar públicamente la autoría por el mero uso de la herramienta ni por publicar documentos generados con ella.
+
 La skill incluye [yaml](https://github.com/eemeli/yaml) (ISC) y [smol-toml](https://github.com/squirrelchat/smol-toml)
 (BSD-3-Clause) en `skills/vault-generator/scripts/vendor/`, con sus textos de licencia. La skill instalada lleva sus
 propios `LICENSE.txt` y `NOTICE.txt`.

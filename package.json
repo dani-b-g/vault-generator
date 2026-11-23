@@ -4,6 +4,10 @@
   "version": "1.0.0",
   "description": "Development repository for the vault-generator Agent Skill",
   "license": "Apache-2.0",
+  "author": {
+    "name": "Daniel B. Grados",
+    "url": "https://github.com/dani-b-g"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/dani-b-g/vault-generator.git"
