@@ -16,6 +16,10 @@ on:
         type: choice
         options: [patch, minor, major]
         default: patch
+      version:
+        description: 'Optional exact version to release (e.g. 1.0.0); leave empty to calculate the next version'
+        type: string
+        default: ''
       beta:
         description: 'Beta (pre-release), e.g. 0.2.0-beta.1'
         type: boolean
@@ -36,6 +40,7 @@ jobs:
       contents: write # push the bump commit and the tag, create the release
     env:
       BUMP: ${{ inputs.bump }}
+      EXACT_VERSION: ${{ inputs.version }}
       BETA: ${{ inputs.beta }}
       BRANCH: ${{ github.ref_name }}
       GH_TOKEN: ${{ github.token }}
@@ -57,7 +62,15 @@ jobs:
           fi
           args=("$BUMP")
           if [ "$BETA" = "true" ]; then args+=(--beta); fi
-          VERSION="$(node tools/version.mjs next "${args[@]}")"
+          if [ -n "$EXACT_VERSION" ]; then
+            if ! [[ "$EXACT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+              echo "::error::invalid exact version: $EXACT_VERSION"
+              exit 1
+            fi
+            VERSION="$EXACT_VERSION"
+          else
+            VERSION="$(node tools/version.mjs next "${args[@]}")"
+          fi
           TAG="v$VERSION"
           if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
             echo "::error::tag $TAG already exists"
@@ -71,7 +84,14 @@ jobs:
           echo "TAG=$TAG" >> "$GITHUB_ENV"
           echo "Releasing $TAG from $BRANCH"
 
-      - name: Bump the version everywhere and refresh the installed copies
+      - name: Refresh checked-in installed skill copies in the release checkout
+        run: |
+          # CI checkout is disposable; installed copies can have stale metadata after changes to the source skill.
+          node skills/vault-generator/scripts/install.ts --target . --agent both --force
+          # Backups are only needed for local developer runs, not in this disposable runner.
+          rm -rf .vault-generator-install-backups
+
+      - name: Set the version everywhere and refresh the installed copies
         run: npm run version:set -- "$VERSION"
 
       - name: Install dependencies
@@ -95,7 +115,11 @@ jobs:
             git ls-files --others --exclude-standard
             exit 1
           fi
-          git commit -m "chore: release $TAG"
+          if git diff --cached --quiet; then
+            echo "No version changes required; tagging the current commit."
+          else
+            git commit -m "chore: release $TAG"
+          fi
           git tag -a "$TAG" -m "$TAG"
 
       - name: Build the skill zip and checksums
