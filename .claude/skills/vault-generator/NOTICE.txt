@@ -1,5 +1,7 @@
 vault-generator (Agent Skill)
 Copyright 2026 vault-generator contributors
+Original project creator: Daniel B. Grados (dani-b-g)
+Original source: https://github.com/dani-b-g/vault-generator
 
 Licensed under the Apache License, Version 2.0 (see LICENSE.txt in this directory).
 
