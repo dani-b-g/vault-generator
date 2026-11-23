@@ -894,7 +894,7 @@ Contributions are accepted under the Apache License 2.0 (section 5 of the licens
 
 Licensed under the [Apache License, Version 2.0](LICENSE). See [NOTICE](NOTICE) for attributions.
 
-**Original project creator:** [dani-b-g](https://github.com/dani-b-g)  
+**Original project creator:** Daniel B. Grados ([dani-b-g](https://github.com/dani-b-g))  
 **Original source:** https://github.com/dani-b-g/vault-generator
 
 Commercial and non-commercial use, modification, and redistribution are permitted under Apache 2.0. When redistributing this project or a derivative work (including portions of its code), retain the applicable license, copyright and attribution notices in accordance with Section 4 of Apache 2.0. This does not require public-facing credit merely for using the tool or for publishing documents generated with it.
